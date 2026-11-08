@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Partitura de Bolso</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#1d5c8f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: uma coluna estreita de app de celular; gravador no topo, ajustes, partitura em "papel" branco, ações embaixo */
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --ink:#14202b; --muted:#5b6876; --line:#d5dbe2;
+  --accent:#1d5c8f; --accent-ink:#ffffff; --rec:#c8372d; --paper:#fdfdfb; --paper-ink:#111;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f151b; --surface:#17202a; --ink:#e6edf3; --muted:#93a1af; --line:#2a3644;
+  --accent:#6fb0e6; --accent-ink:#0b1620; --rec:#ef5b4f; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0f151b; --surface:#17202a; --ink:#e6edf3; --muted:#93a1af; --line:#2a3644;
+  --accent:#6fb0e6; --accent-ink:#0b1620; --rec:#ef5b4f; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:720px;margin:0 auto;display:grid;gap:18px}
+header h1{font:800 1.9rem/1.1 var(--display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:4px 0 0;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+.rec{display:grid;justify-items:center;gap:10px;text-align:center}
+#recBtn{width:96px;height:96px;border-radius:50%;border:4px solid var(--rec);background:var(--surface);cursor:pointer;display:grid;place-items:center;transition:transform .15s}
+#recBtn::after{content:"";width:40px;height:40px;border-radius:50%;background:var(--rec);transition:all .2s}
+#recBtn.on::after{border-radius:6px;width:34px;height:34px}
+#recBtn.on{animation:pulse 1.2s infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+@media (prefers-reduced-motion:reduce){#recBtn.on{animation:none}}
+#clock{font:600 1.6rem var(--display);font-variant-numeric:tabular-nums}
+#meter{width:min(260px,100%);height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+#meter i{display:block;height:100%;width:0;background:var(--rec)}
+.hint{color:var(--muted);font-size:.9rem;margin:0}
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.85rem;width:100%}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.filebtn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border:1.5px solid var(--accent);color:var(--accent);border-radius:999px;font-weight:700;cursor:pointer}
+.filebtn input{position:absolute;opacity:0;width:1px;height:1px}
+.notice{background:color-mix(in srgb,var(--rec) 12%,var(--surface));border:1px solid color-mix(in srgb,var(--rec) 40%,var(--line));border-radius:10px;padding:10px 12px;font-size:.9rem;text-align:left}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+label.f{display:grid;gap:4px;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+select,input[type=number]{font:inherit;font-size:1rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;text-transform:none;letter-spacing:0}
+.checks{display:flex;flex-wrap:wrap;gap:8px 18px;grid-column:1/-1;font-size:.95rem}
+.checks label{display:flex;gap:8px;align-items:center}
+.scorehead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.scorehead h2{font:600 1.15rem var(--display);margin:0}
+#stats{color:var(--muted);font-size:.9rem;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--accent);color:var(--accent-ink);vertical-align:middle;margin-left:6px}
+#paper{background:var(--paper);color:var(--paper-ink);border-radius:8px;margin-top:12px;padding:6px 2px;overflow-x:auto;min-height:120px}
+#paper svg{max-width:100%}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+button.b{font:700 .95rem var(--body);padding:10px 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button.b.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.b:disabled{opacity:.45;cursor:default}
+button:focus-visible,select:focus-visible,input:focus-visible,.filebtn:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+#status{min-height:1.4em;font-size:.92rem;color:var(--muted);margin:8px 0 0}
+details{font-size:.92rem;color:var(--muted)}
+details pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);padding:10px;border-radius:8px;color:var(--ink);font-size:.82rem}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Partitura de Bolso</h1>
+    <p>Grave uma melodia (voz, flauta, violino, assobio) e veja as notas na pauta.</p>
+  </header>
+
+  <section class="card rec" aria-label="Gravação">
+    <button id="recBtn" aria-label="Gravar"></button>
+    <div id="clock">0:00</div>
+    <div id="meter" aria-hidden="true"><i id="meterBar"></i></div>
+    <p class="hint" id="recHint">Toque para gravar. Uma nota por vez, num lugar silencioso.</p>
+    <div id="micNotice" class="notice" hidden></div>
+    <div class="or">ou</div>
+    <label class="filebtn">Enviar ou gravar arquivo de áudio
+      <input id="fileIn" type="file" accept="audio/*" capture>
+    </label>
+  </section>
+
+  <section class="card settings" aria-label="Ajustes">
+    <label class="f">Andamento (BPM)<input id="bpm" type="number" min="40" max="220" step="1" value="100"></label>
+    <label class="f">Compasso
+      <select id="meterSel"><option value="4">4/4</option><option value="3">3/4</option><option value="2">2/4</option></select></label>
+    <label class="f">Menor figura
+      <select id="grid"><option value="2">Colcheia ♪</option><option value="1">Semicolcheia ♬</option><option value="4">Semínima ♩</option></select></label>
+    <label class="f">Clave
+      <select id="clef"><option value="auto">Automática</option><option value="treble">Sol</option><option value="bass">Fá</option></select></label>
+    <div class="checks">
+      <label><input id="countIn" type="checkbox" checked> Contagem de 1 compasso antes</label>
+      <label><input id="metro" type="checkbox"> Metrônomo ao gravar (use fone)</label>
+    </div>
+  </section>
+
+  <section class="card" aria-label="Partitura">
+    <div class="scorehead">
+      <h2 id="scoreTitle">Brilha, Brilha Estrelinha <span class="tag">Exemplo</span></h2>
+      <span id="stats"></span>
+    </div>
+    <div id="paper"></div>
+    <div class="actions">
+      <button class="b primary" id="playScore">▶ Tocar partitura</button>
+      <button class="b" id="playRec" disabled>Ouvir gravação</button>
+      <button class="b" id="saveSvg">Salvar imagem (SVG)</button>
+      <button class="b" id="saveAbc">Salvar texto ABC</button>
+      <button class="b" id="saveMidi" hidden>Salvar MIDI</button>
+    </div>
+    <p id="status" role="status"></p>
+    <details><summary>Ver notação ABC</summary><pre id="abcOut"></pre></details>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/abcjs@6.4.4/dist/abcjs-basic-min.js"></script>
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const status = t => { $('status').textContent = t || ''; };
+let actx = null;
+function ac(){ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); return actx; }
+
+/* ---------- estado ---------- */
+let raw = null;          // {notes:[{midi,start,end}], origin, buffer}
+let example = null;      // sequência de exemplo em semicolcheias
+let seq = [];            // [{midi|null, dur}] em semicolcheias
+let rec = null, playing = [];
+
+/* ---------- utilidades de áudio ---------- */
+function click(t, strong){
+  const c = ac(), o = c.createOscillator(), g = c.createGain();
+  o.type='square'; o.frequency.value = strong ? 2000 : 1400;
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.35,t+0.002); g.gain.exponentialRampToValueAtTime(0.0001,t+0.04);
+  o.connect(g).connect(c.destination); o.start(t); o.stop(t+0.05);
+}
+const bpm = () => Math.min(220, Math.max(40, +$('bpm').value || 100));
+const beatsPerBar = () => +$('meterSel').value;
+
+/* ---------- gravação ---------- */
+function micBlocked(err){
+  const n = $('micNotice'); n.hidden = false;
+  n.innerHTML = 'A gravação direta não está liberada nesta página' + (err && err.name==='NotAllowedError' ? ' (permissão do microfone negada)' : '') +
+    '. Use o botão <b>Enviar ou gravar arquivo de áudio</b> abaixo: no celular ele abre o gravador do sistema.';
+}
+async function startRec(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return micBlocked();
+  let stream;
+  try{ stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}}); }
+  catch(e){ return micBlocked(e); }
+  const c = ac(), src = c.createMediaStreamSource(stream), proc = c.createScriptProcessor(4096,1,1), mute = c.createGain();
+  mute.gain.value = 0;
+  rec = {stream, src, proc, mute, chunks:[], firstT:null, sr:c.sampleRate};
+  proc.onaudioprocess = e => {
+    const d = e.inputBuffer.getChannelData(0);
+    if(rec.firstT === null) rec.firstT = e.playbackTime - d.length / c.sampleRate;
+    rec.chunks.push(new Float32Array(d));
+    let s=0; for(let i=0;i<d.length;i+=8) s+=d[i]*d[i];
+    $('meterBar').style.width = Math.min(100, Math.sqrt(s/(d.length/8))*400) + '%';
+  };
+  src.connect(proc); proc.connect(mute); mute.connect(c.destination);
+  const beat = 60/bpm(), t0 = c.currentTime + 0.25, n = $('countIn').checked ? beatsPerBar() : 0;
+  for(let i=0;i<n;i++) click(t0+i*beat, i===0);
+  rec.origin = t0 + n*beat;
+  if($('metro').checked){
+    let next = rec.origin, k = 0;
+    rec.metro = setInterval(() => { while(next < c.currentTime + 0.3){ click(next, k % beatsPerBar() === 0); next += beat; k++; } }, 80);
+  }
+  rec.tick = setInterval(() => {
+    const t = c.currentTime - rec.origin;
+    if(t < 0){ $('clock').textContent = Math.ceil(-t/beat); $('recHint').textContent = 'Prepare-se…'; }
+    else { $('clock').textContent = Math.floor(t/60) + ':' + String(Math.floor(t%60)).padStart(2,'0'); $('recHint').textContent = 'Gravando. Toque de novo para parar.'; }
+  }, 100);
+  $('recBtn').classList.add('on'); $('recBtn').setAttribute('aria-label','Parar');
+}
+function stopRec(){
+  const r = rec; rec = null;
+  clearInterval(r.tick); clearInterval(r.metro);
+  r.proc.disconnect(); r.src.disconnect(); r.mute.disconnect(); r.stream.getTracks().forEach(t => t.stop());
+  $('recBtn').classList.remove('on'); $('recBtn').setAttribute('aria-label','Gravar');
+  $('meterBar').style.width = '0'; $('recHint').textContent = 'Toque para gravar de novo.';
+  const len = r.chunks.reduce((a,b)=>a+b.length,0);
+  if(!len){ status('Nada foi gravado. Tente de novo.'); return; }
+  const buf = ac().createBuffer(1, len, r.sr); const ch = buf.getChannelData(0);
+  let o = 0; for(const c of r.chunks){ ch.set(c,o); o += c.length; }
+  analyze(buf, Math.max(0, r.origin - r.firstT));
+}
+$('recBtn').onclick = () => rec ? stopRec() : startRec();
+
+$('fileIn').onchange = async e => {
+  const f = e.target.files[0]; if(!f) return;
+  status('Lendo o arquivo…');
+  try{
+    const ab = await f.arrayBuffer();
+    const buf = await new Promise((res,rej) => ac().decodeAudioData(ab, res, rej));
+    analyze(buf, null, f.name.replace(/\.[^.]+$/,''));
+  }catch(err){ status('Não consegui ler esse áudio. Tente um arquivo .mp3, .m4a ou .wav.'); }
+  e.target.value = '';
+};
+
+/* ---------- detecção de altura (YIN) ---------- */
+const SR = 16000, N = 1024, HOP = 256, W = N/2, TMIN = Math.floor(SR/1400), TMAX = Math.min(W-1, Math.floor(SR/65));
+const dBuf = new Float32Array(TMAX+2);
+function yin(x, off){
+  dBuf[0] = 1; let run = 0;
+  for(let tau=1; tau<=TMAX+1; tau++){
+    let s = 0;
+    for(let j=0;j<W;j++){ const d = x[off+j] - x[off+j+tau]; s += d*d; }
+    run += s; dBuf[tau] = run ? s*tau/run : 1;
+  }
+  let tau = -1;
+  for(let t=TMIN; t<=TMAX; t++){ if(dBuf[t] < 0.15){ while(t+1<=TMAX && dBuf[t+1] < dBuf[t]) t++; tau = t; break; } }
+  if(tau < 0) return 0;
+  const a = dBuf[tau-1], b = dBuf[tau], c = dBuf[tau+1], den = a + c - 2*b;
+  const better = den ? tau + (a - c)/(2*den) : tau;
+  return SR / better;
+}
+const median = a => { const s = [...a].sort((p,q)=>p-q); return s[Math.floor(s.length/2)]; };
+
+async function analyze(buffer, origin, name){
+  status('Analisando as notas…');
+  await new Promise(r => setTimeout(r, 30));
+  const off = new OfflineAudioContext(1, Math.ceil(buffer.duration*SR), SR);
+  const s = off.createBufferSource(); s.buffer = buffer; s.connect(off.destination); s.start();
+  const x = (await off.startRendering()).getChannelData(0);
+
+  const frames = [];
+  for(let i=0; i+N+2 <= x.length; i+=HOP){
+    let e=0; for(let j=0;j<N;j++) e += x[i+j]*x[i+j];
+    frames.push({t:(i + N/2)/SR, rms:Math.sqrt(e/N), m:NaN});
+  }
+  const peak = Math.max(0, ...frames.map(f=>f.rms));
+  const thr = Math.max(0.006, peak*0.08);
+  frames.forEach((f, k) => { if(f.rms > thr){ const hz = yin(x, k*HOP); if(hz) f.m = 69 + 12*Math.log2(hz/440); } });
+
+  const voiced = frames.filter(f => !isNaN(f.m));
+  if(voiced.length < 5){ status('Não encontrei notas. Grave mais perto do microfone, uma nota por vez.'); return; }
+  const tune = median(voiced.map(f => f.m - Math.round(f.m)));
+  const mi = frames.map(f => isNaN(f.m) ? NaN : Math.round(f.m - tune));
+  const sm = mi.map((_, k) => { const w = mi.slice(Math.max(0,k-2), k+3).filter(v=>!isNaN(v)); return w.length >= 3 ? median(w) : NaN; });
+
+  const notes = []; let cur = null, minSince = Infinity;
+  const close = k => { if(cur){ cur.end = frames[k].t; if(cur.end - cur.start >= 0.06) notes.push(cur); cur = null; } };
+  for(let k=0; k<frames.length; k++){
+    const m = sm[k], r = frames[k].rms;
+    if(isNaN(m)){ close(k); continue; }
+    if(cur && m !== cur.midi) close(k);
+    if(cur && r > 2*minSince && minSince < 0.6*cur.peak){ close(k); }
+    if(!cur){ cur = {midi:m, start:frames[k].t - N/2/SR, peak:r}; minSince = r; }
+    cur.peak = Math.max(cur.peak, r); minSince = Math.min(minSince, r);
+  }
+  close(frames.length-1);
+  if(!notes.length){ status('Não encontrei notas firmes. Tente sustentar cada nota um pouco mais.'); return; }
+
+  raw = {notes, origin, buffer};
+  example = null;
+  $('scoreTitle').textContent = name || 'Minha gravação';
+  $('playRec').disabled = false;
+  rebuild();
+  status('Pronto. Se o ritmo ficou estranho, ajuste o BPM ou a menor figura.');
+}
+
+/* ---------- quantização ---------- */
+function quantize(){
+  const u = 60/bpm()/4, g = +$('grid').value;
+  const origin = raw.origin != null ? raw.origin : raw.notes[0].start;
+  const out = []; let prevEnd = 0;
+  for(const n of raw.notes){
+    if(n.end < origin - 0.05) continue;
+    let s = Math.round((n.start-origin)/u/g)*g, e = Math.round((n.end-origin)/u/g)*g;
+    if(s < 0) s = 0;
+    if(s < prevEnd) s = prevEnd;
+    if(e <= s) e = s + g;
+    if(out.length && s > prevEnd && s - prevEnd <= g) out[out.length-1].dur += s - prevEnd;
+    else if(s > prevEnd) out.push({midi:null, dur:s-prevEnd});
+    out.push({midi:n.midi, dur:e-s}); prevEnd = e;
+  }
+  return out;
+}
+
+/* ---------- ABC ---------- */
+const NAMES = [['C',0],['C',1],['D',0],['D',1],['E',0],['F',0],['F',1],['G',0],['G',1],['A',0],['A',1],['B',0]];
+const PARTS = [16,12,8,6,4,3,2,1];
+function abcPitch(midi, acc){
+  const [L, sharp] = NAMES[((midi%12)+12)%12], oct = Math.floor(midi/12) - 1, key = L + oct;
+  let pre = '';
+  if(sharp && acc[key] !== '#'){ pre = '^'; acc[key] = '#'; }
+  else if(!sharp && acc[key] === '#'){ pre = '='; acc[key] = 'n'; }
+  const name = oct >= 5 ? L.toLowerCase() + "'".repeat(oct-5) : L + ','.repeat(Math.max(0, 4-oct));
+  return pre + name;
+}
+function toAbc(seq, title){
+  const bar = beatsPerBar()*4;
+  const pitched = seq.filter(e => e.midi != null).map(e => e.midi);
+  let clef = $('clef').value;
+  if(clef === 'auto') clef = pitched.length && median(pitched) < 55 ? 'bass' : 'treble';
+  let body = '', pos = 0, acc = {}, bars = 0;
+  const total = seq.reduce((a,e)=>a+e.dur,0);
+  const padded = total % bar ? [...seq, {midi:null, dur: bar - total%bar}] : seq;
+  for(const ev of padded){
+    let rem = ev.dur;
+    while(rem > 0){
+      const chunk = Math.min(rem, bar - pos%bar);
+      let left = chunk;
+      while(left > 0){
+        const p = PARTS.find(v => v <= left);
+        left -= p; rem -= p; pos += p;
+        const tok = ev.midi == null ? 'z' : abcPitch(ev.midi, acc);
+        body += tok + (p === 1 ? '' : p) + (ev.midi != null && rem > 0 ? '-' : '') + ' ';
+      }
+      if(pos % bar === 0){ bars++; acc = {}; body += (bars % 4 === 0 ? '|\n' : '| '); }
+    }
+  }
+  return {abc:`X:1\nT:${title}\nM:${beatsPerBar()}/4\nL:1/16\nQ:1/4=${bpm()}\nK:C clef=${clef}\n${body.trim()}`, bars, notes:pitched.length};
+}
+
+function rebuild(){
+  seq = raw ? quantize() : example;
+  const title = $('scoreTitle').childNodes[0].textContent.trim();
+  const r = toAbc(seq, '');
+  $('abcOut').textContent = r.abc.replace('T:\n', 'T:' + title + '\n');
+  if(window.ABCJS){ ABCJS.renderAbc('paper', r.abc, {responsive:'resize', paddingtop:0, paddingbottom:0}); }
+  else $('paper').textContent = 'Não foi possível carregar o desenho da partitura (sem internet?).';
+  $('stats').textContent = `${r.notes} notas · ${r.bars} compassos · ♩ = ${bpm()}`;
+}
+['bpm','meterSel','grid','clef'].forEach(id => $(id).addEventListener('change', () => { if(seq.length) rebuild(); }));
+
+/* ---------- reprodução ---------- */
+function stopAll(){ playing.forEach(n => { try{ n.stop(); }catch(e){} }); playing = []; $('playScore').textContent = '▶ Tocar partitura'; $('playRec').textContent = 'Ouvir gravação'; }
+$('playScore').onclick = () => {
+  if(playing.length) return stopAll();
+  const c = ac(), u = 60/bpm()/4; let t = c.currentTime + 0.1;
+  for(const ev of seq){
+    const d = ev.dur*u;
+    if(ev.midi != null){
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = 'triangle'; o.frequency.value = 440*Math.pow(2,(ev.midi-69)/12);
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.3,t+0.02); g.gain.setValueAtTime(0.3,t+d*0.8); g.gain.exponentialRampToValueAtTime(0.0001,t+d*0.95);
+      o.connect(g).connect(c.destination); o.start(t); o.stop(t+d); playing.push(o);
+    }
+    t += d;
+  }
+  if(playing.length){ $('playScore').textContent = '■ Parar'; playing[playing.length-1].onended = stopAll; }
+};
+$('playRec').onclick = () => {
+  if(playing.length) return stopAll();
+  if(!raw) return;
+  const c = ac(), s = c.createBufferSource(); s.buffer = raw.buffer; s.connect(c.destination); s.start();
+  s.onended = stopAll; playing = [s]; $('playRec').textContent = '■ Parar';
+};
+
+/* ---------- salvar ---------- */
+const fname = ext => ($('scoreTitle').childNodes[0].textContent.trim() || 'partitura').replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'-').toLowerCase() + '.' + ext;
+async function save(name, data, type){
+  const blob = new Blob([data], {type});
+  if(window.claude && window.claude.use){
+    try{
+      const d = await window.claude.use('downloads');
+      if(d){ await d.save({filename:name, data:blob}); status('Arquivo salvo.'); return; }
+    }catch(e){ if(e && e.code === 'declined') return; status('Não foi possível salvar aqui: ' + (e && e.message || 'erro')); return; }
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+$('saveSvg').onclick = () => {
+  const svg = $('paper').querySelector('svg'); if(!svg) return;
+  const cl = svg.cloneNode(true); cl.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  cl.insertAdjacentHTML('afterbegin','<rect width="100%" height="100%" fill="#fff"/>');
+  save(fname('svg'), cl.outerHTML, 'image/svg+xml');
+};
+$('saveAbc').onclick = () => save(fname('txt'), $('abcOut').textContent, 'text/plain');
+
+function vlq(n){ const b=[n&127]; while(n>>=7) b.unshift((n&127)|128); return b; }
+function midiBytes(){
+  const per16 = 120, tr = [];
+  const us = Math.round(60000000/bpm());
+  tr.push(0,0xFF,0x51,3,(us>>16)&255,(us>>8)&255,us&255);
+  let wait = 0;
+  for(const ev of seq){
+    if(ev.midi == null){ wait += ev.dur*per16; continue; }
+    tr.push(...vlq(wait),0x90,ev.midi,90,...vlq(ev.dur*per16),0x80,ev.midi,0); wait = 0;
+  }
+  tr.push(0,0xFF,0x2F,0);
+  const h = [0x4D,0x54,0x68,0x64,0,0,0,6,0,0,0,1,1,224, 0x4D,0x54,0x72,0x6B,(tr.length>>>24)&255,(tr.length>>16)&255,(tr.length>>8)&255,tr.length&255];
+  return new Uint8Array([...h, ...tr]);
+}
+if(!window.claude){ $('saveMidi').hidden = false; $('saveMidi').onclick = () => save(fname('mid'), midiBytes(), 'audio/midi'); }
+
+/* ---------- exemplo inicial ---------- */
+const tw = [60,60,67,67,69,69,67,0,65,65,64,64,62,62,60,0];
+example = []; tw.forEach((m,i) => { if(m) example.push({midi:m, dur: tw[i+1]===0 ? 8 : 4}); });
+$('bpm').value = 100;
+function boot(){ rebuild(); }
+if(window.ABCJS) boot(); else window.addEventListener('load', boot);
+})();
+</script>
+</html>
